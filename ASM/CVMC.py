@@ -24,7 +24,7 @@ asm_grammar = """
     mul: "mul" NAME "," value
     cmp: "cmp" NAME "," value
     pop: "pop"
-    tag: "tag" NAME
+    tag: NAME ":"
     je: "je" NAME
     jne: "jne" NAME
     jmp: "jmp" NAME

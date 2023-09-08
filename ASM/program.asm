@@ -1,6 +1,6 @@
 
 mov ax, 1
-tag loop
+loop:
 push ax
 print
 add ax, 1
