@@ -98,8 +98,9 @@ private:
     {
         if (!stringStack.empty()) {
             std::string name = stringStack.top();
-            int i = data[name]();
+            stringStack.pop();
 
+            int i = data[name]();
             intStack.push(i);
         }
     }

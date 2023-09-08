@@ -6,7 +6,7 @@
 
 int Test()
 {
-    return 5;
+    return 2;
 }
 
 int main()
