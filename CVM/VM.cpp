@@ -23,10 +23,11 @@ public:
         memory = bytecode;
         programCounter = 0;
         this->data = data;
-        this->registers[1] = 0;
-        this->registers[2] = 0;
-        this->registers[3] = 0;
-        this->registers[4] = 0;
+        this->registers[1] = 0; //ax
+        this->registers[2] = 0; //bx
+        this->registers[3] = 0; //cx
+        this->registers[4] = 0; //dx
+        this->registers[5] = 0; //system register (ex)
     }
 
     void execute() {
@@ -42,43 +43,48 @@ public:
                 pushStr();
                 break;
             case 0x03:
+                pushReg();
+            case 0x04:
                 print();
                 break;
-            case 0x04:
+            case 0x05:
                 input();
                 break;
-            case 0x05:
+            case 0x06:
                 add();
                 break;
-            case 0x06:
+            case 0x07:
                 sub();
                 break;
-            case 0x07:
+            case 0x08:
                 mul();
                 break;
-            case 0x08:
+            case 0x09:
                 cmp();
                 break;
-            case 0x09:
+            case 0x0A:
                 je();
                 break;
-            case 0x0A:
+            case 0x0B:
                 jne();
                 break;
-            case 0x0B:
+            case 0x0C:
                 jmp();
                 break;
-            case 0x0C:
-                CallBack();
+            case 0x0D:
+                callBack();
                 break;
             case 0x0E:
-                pop();
-                break;
-            case 0x0D:
-                MovInt();
+                moveInt();
                 break;
             case 0x0F:
-                move_registers();
+                moveReg();
+                break;
+            case 0x10:
+                pop();
+                break;
+            case 0x11:
+                popReg();
                 break;
             default:
                 std::cerr << "Invalid Instruction: " << instruction << std::endl;
@@ -98,6 +104,12 @@ private:
         stringStack.push(value);
     }
 
+    void pushReg() {
+        uint8_t r1 = memory[programCounter];
+        programCounter++;
+        intStack.push(registers[r1]);
+    }
+
     void pop()
     {
         if (!intStack.empty()) {
@@ -105,6 +117,16 @@ private:
         }
         else if (!stringStack.empty()) {
             stringStack.pop();
+        }
+    }
+
+    void popReg() {
+        if (!intStack.empty()) {
+            int number = intStack.top();
+            intStack.pop();
+            uint8_t r1 = memory[programCounter];
+            programCounter++;
+            registers[r1] = number;
         }
     }
 
@@ -119,29 +141,23 @@ private:
         }
     }
 
-    void MovInt()
+    void moveInt()
     {
         uint8_t r1 = memory[programCounter];
-
         programCounter++;
-
         auto number = readInt();
-
         registers[r1] = number;
     }
 
-    void move_registers()
+    void moveReg()
     {
-        uint8_t r1 = memory[programCounter];
-        programCounter++;
-
-        uint8_t r2 = memory[programCounter];
-        programCounter++;
-
+        auto result = readRegs();
+        int r1 = std::get<0>(result);
+        int r2 = std::get<1>(result);
         registers[r1] = registers[r2];
     }
 
-    void CallBack()
+    void callBack()
     {
         if (!stringStack.empty()) {
             std::string name = stringStack.top();
@@ -165,35 +181,31 @@ private:
     }
 
     void add() {
-        int a = intStack.top();
-        intStack.pop();
-        int b = intStack.top();
-        intStack.pop();
-        intStack.push(a + b);
+        auto result = readRegs();
+        int r1 = std::get<0>(result);
+        int r2 = std::get<1>(result);
+        registers[r1] += registers[r2];
     }
 
     void sub() {
-        int a = intStack.top();
-        intStack.pop();
-        int b = intStack.top();
-        intStack.pop();
-        intStack.push(b - a);
+        auto result = readRegs();
+        int r1 = std::get<0>(result);
+        int r2 = std::get<1>(result);
+        registers[r1] -= registers[r2];
     }
 
     void mul() {
-        int a = intStack.top();
-        intStack.pop();
-        int b = intStack.top();
-        intStack.pop();
-        intStack.push(a * b);
+        auto result = readRegs();
+        int r1 = std::get<0>(result);
+        int r2 = std::get<1>(result);
+        registers[r1] *= registers[r2];
     }
 
     void cmp() {
-        int a = intStack.top();
-        intStack.pop();
-        int b = intStack.top();
-        intStack.pop();
-        intStack.push(b - a);
+        auto result = readRegs();
+        int r1 = std::get<0>(result);
+        int r2 = std::get<1>(result);
+        intStack.push(r1 - r2);
     }
 
     void je() {
@@ -221,6 +233,15 @@ private:
         int value = memory[programCounter];
         programCounter += 4;
         return value;
+    }
+
+    std::tuple<int, int> readRegs() {
+        uint8_t r1 = memory[programCounter];
+        programCounter++;
+        uint8_t r2 = memory[programCounter];
+        programCounter++;
+
+        return std::make_tuple(r1, r2);
     }
 
     std::string readString() {
