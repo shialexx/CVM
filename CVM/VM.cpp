@@ -17,7 +17,7 @@ private:
     std::map<int, int> Registers;
     int ProgramCounter;
 public:
-    VirtualMachine(const std::vector<uint8_t>& ByteCode, std::map<std::string, Function> Data)
+    VirtualMachine(const std::vector<uint8_t>& ByteCode, std::map<std::string, Function> Data = {})
     {
         Memory = ByteCode;
         ProgramCounter = 0;
@@ -27,7 +27,7 @@ public:
             this->Registers[i] = 0;
     }
 
-    void execute() {
+    void Execute() {
         while (ProgramCounter < Memory.size()) {
             uint8_t Instructions = Memory[ProgramCounter];
             ProgramCounter++;
@@ -202,7 +202,7 @@ private:
         auto Result = ReadRegs();
         int R1 = std::get<0>(Result);
         int R2 = std::get<1>(Result);
-        IntStack.push(R1 - R2);
+        IntStack.push(Registers[R1] - Registers[R2]);
     }
 
     void Je() {
