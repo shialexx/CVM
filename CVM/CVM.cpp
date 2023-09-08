@@ -11,7 +11,7 @@ int Test()
 
 int main()
 {
-    std::vector<uint8_t> bytecode = { 0x02, 0x04, 0x54, 0x65, 0x73, 0x74, 0x0C, 0x03 };
+    std::vector<uint8_t> bytecode = { 0x0D, 0x01 };
 
     std::map<std::string, Function> func = {};
 

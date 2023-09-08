@@ -5,6 +5,7 @@
 #include <functional>
 #include <map>
 
+
 typedef std::function<int()> Function;
 
 class VirtualMachine {
@@ -13,6 +14,7 @@ private:
     std::vector<uint8_t> memory;
     std::stack<int> intStack;
     std::stack<std::string> stringStack;
+    std::map<int, int> registers;
     int programCounter;
 
 public:
@@ -21,6 +23,10 @@ public:
         memory = bytecode;
         programCounter = 0;
         this->data = data;
+        this->registers[1] = 0;
+        this->registers[2] = 0;
+        this->registers[3] = 0;
+        this->registers[4] = 0;
     }
 
     void execute() {
@@ -65,6 +71,15 @@ public:
             case 0x0C:
                 CallBack();
                 break;
+            case 0x0E:
+                pop();
+                break;
+            case 0x0D:
+                MovInt();
+                break;
+            case 0x0F:
+                move_registers();
+                break;
             default:
                 std::cerr << "Invalid Instruction: " << instruction << std::endl;
                 return;
@@ -83,6 +98,16 @@ private:
         stringStack.push(value);
     }
 
+    void pop()
+    {
+        if (!intStack.empty()) {
+            intStack.pop();
+        }
+        else if (!stringStack.empty()) {
+            stringStack.pop();
+        }
+    }
+
     void print() {
         if (!intStack.empty()) {
             std::cout << intStack.top() << std::endl;
@@ -94,11 +119,32 @@ private:
         }
     }
 
+    void MovInt()
+    {
+        uint8_t r1 = memory[programCounter];
+
+        programCounter++;
+
+        auto number = readInt();
+
+        registers[r1] = number;
+    }
+
+    void move_registers()
+    {
+        uint8_t r1 = memory[programCounter];
+        programCounter++;
+
+        uint8_t r2 = memory[programCounter];
+        programCounter++;
+
+        registers[r1] = registers[r2];
+    }
+
     void CallBack()
     {
         if (!stringStack.empty()) {
             std::string name = stringStack.top();
-            stringStack.pop();
 
             int i = data[name]();
             intStack.push(i);
