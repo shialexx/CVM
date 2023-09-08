@@ -92,39 +92,34 @@ public:
 
 private:
     void PushInt() {
-        int Value = ReadInt();
-        IntStack.push(Value);
+        IntStack.push(ReadInt());
     }
 
     void PushStr() {
-        std::string Value = ReadString();
-        StringStack.push(Value);
+        StringStack.push(ReadString());
     }
 
     void PushReg() {
-        uint8_t R1 = Memory[ProgramCounter];
         ProgramCounter++;
-        IntStack.push(Registers[R1]);
+        IntStack.push(Registers[Memory[ProgramCounter]]);
     }
 
     void Pop()
     {
-        if (!IntStack.empty()) {
-            IntStack.pop();
-        }
-        else if (!StringStack.empty()) {
-            StringStack.pop();
-        }
+        if (IntStack.empty() || StringStack.empty())
+            return;
+
+        StringStack.pop();
+        IntStack.pop();
     }
 
     void PopReg() {
-        if (!IntStack.empty()) {
-            int Number = IntStack.top();
-            IntStack.pop();
-            uint8_t R1 = Memory[ProgramCounter];
-            ProgramCounter++;
-            Registers[R1] = Number;
-        }
+        if (IntStack.empty())
+            return;
+
+        IntStack.pop();
+        ProgramCounter++;
+        Registers[Memory[ProgramCounter]] = IntStack.top();
     }
 
     void Print() {
@@ -140,28 +135,22 @@ private:
 
     void MoveInt()
     {
-        uint8_t R1 = Memory[ProgramCounter];
         ProgramCounter++;
-        auto Number = ReadInt();
-        Registers[R1] = Number;
+        Registers[Memory[ProgramCounter]] = ReadInt();
     }
 
     void MoveReg()
     {
-        auto Result = ReadRegs();
-        int R1 = std::get<0>(Result);
-        int R2 = std::get<1>(Result);
+        auto [R1, R2] = ReadRegs();
         Registers[R1] = Registers[R2];
     }
 
     void CallBack()
     {
-        if (!StringStack.empty()) {
-            std::string Name = StringStack.top();
+        if (StringStack.empty())
+            return;
 
-            int It = Data[Name]();
-            IntStack.push(It);
-        }
+        IntStack.push(Data[StringStack.top()]());
     }
 
     void Input() {
@@ -178,58 +167,46 @@ private:
     }
 
     void Add() {
-        auto Result = ReadRegs();
-        int R1 = std::get<0>(Result);
-        int R2 = std::get<1>(Result);
+        auto [R1, R2] = ReadRegs();
         Registers[R1] += Registers[R2];
     }
 
     void Sub() {
-        auto Result = ReadRegs();
-        int R1 = std::get<0>(Result);
-        int R2 = std::get<1>(Result);
+        auto [R1, R2] = ReadRegs();
         Registers[R1] -= Registers[R2];
     }
 
     void Mul() {
-        auto Result = ReadRegs();
-        int R1 = std::get<0>(Result);
-        int R2 = std::get<1>(Result);
+        auto [R1, R2] = ReadRegs();
         Registers[R1] *= Registers[R2];
     }
 
     void Cmp() {
-        auto Result = ReadRegs();
-        int R1 = std::get<0>(Result);
-        int R2 = std::get<1>(Result);
+        auto [R1, R2] = ReadRegs();
         IntStack.push(Registers[R1] - Registers[R2]);
     }
 
     void Je() {
-        int JumpAddress = ReadInt();
-        if (IntStack.top() == 0) {
-            ProgramCounter = JumpAddress;
-        }
+        if (IntStack.top() == 0)
+            ProgramCounter = ReadInt();
+
         IntStack.pop();
     }
 
     void Jne() {
-        int JumpAddress = ReadInt();
-        if (IntStack.top() != 0) {
-            ProgramCounter = JumpAddress;
-        }
+        if (IntStack.top() != 0)
+            ProgramCounter = ReadInt();
+
         IntStack.pop();
     }
 
     void Jmp() {
-        int JumpAddress = ReadInt();
-        ProgramCounter = JumpAddress;
+        ProgramCounter = ReadInt();
     }
 
     int ReadInt() {
-        int Value = Memory[ProgramCounter];
         ProgramCounter += 4;
-        return Value;
+        return Memory[ProgramCounter];
     }
 
     std::tuple<int, int> ReadRegs() {
@@ -242,10 +219,8 @@ private:
     }
 
     std::string ReadString() {
-        int size = Memory[ProgramCounter];
         ProgramCounter++;
-        std::string Value(Memory.begin() + ProgramCounter, Memory.begin() + ProgramCounter + size);
-        ProgramCounter += size;
-        return Value;
+        ProgramCounter += Memory[ProgramCounter];
+        return std::string(Memory.begin() + ProgramCounter, Memory.begin() + ProgramCounter + Memory[ProgramCounter]);
     }
 };
