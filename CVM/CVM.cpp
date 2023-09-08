@@ -11,13 +11,13 @@ int Test()
 
 int main()
 {
-    std::vector<uint8_t> bytecode = { 0x0E, 0x01, 0x03,0x00,0x00,0x00,0x03, 0x01, 0x04 };
+    std::vector<uint8_t> ByteCode = { 0x0E, 0x01, 0x03,0x00,0x00,0x00,0x03, 0x01, 0x04 };
 
-    std::map<std::string, Function> func = {};
+    std::map<std::string, Function> Func = {};
 
-    func["Test"] = Test;
+    Func["Test"] = Test;
 
-    VirtualMachine vm(bytecode, func);
+    VirtualMachine vm(ByteCode, Func);
     vm.execute();
 
     return 0;

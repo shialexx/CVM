@@ -10,245 +10,242 @@ typedef std::function<int()> Function;
 
 class VirtualMachine {
 private:
-    std::map<std::string, Function> data{};
-    std::vector<uint8_t> memory;
-    std::stack<int> intStack;
-    std::stack<std::string> stringStack;
-    std::map<int, int> registers;
-    int programCounter;
-
+    std::map<std::string, Function> Data{};
+    std::vector<uint8_t> Memory;
+    std::stack<int> IntStack;
+    std::stack<std::string> StringStack;
+    std::map<int, int> Registers;
+    int ProgramCounter;
 public:
-    VirtualMachine(const std::vector<uint8_t>& bytecode, std::map<std::string, Function> data)
+    VirtualMachine(const std::vector<uint8_t>& ByteCode, std::map<std::string, Function> Data)
     {
-        memory = bytecode;
-        programCounter = 0;
-        this->data = data;
-        this->registers[1] = 0; //ax
-        this->registers[2] = 0; //bx
-        this->registers[3] = 0; //cx
-        this->registers[4] = 0; //dx
-        this->registers[5] = 0; //system register (ex)
+        Memory = ByteCode;
+        ProgramCounter = 0;
+        this->Data = Data;
+
+        for (int i = 1; i < 5; i++)
+            this->Registers[i] = 0;
     }
 
     void execute() {
-        while (programCounter < memory.size()) {
-            uint8_t instruction = memory[programCounter];
-            programCounter++;
+        while (ProgramCounter < Memory.size()) {
+            uint8_t Instructions = Memory[ProgramCounter];
+            ProgramCounter++;
 
-            switch (instruction) {
+            switch (Instructions) {
             case 0x01:
-                pushInt();
+                PushInt();
                 break;
             case 0x02:
-                pushStr();
+                PushStr();
                 break;
             case 0x03:
-                pushReg();
+                PushReg();
             case 0x04:
-                print();
+                Print();
                 break;
             case 0x05:
-                input();
+                Input();
                 break;
             case 0x06:
-                add();
+                Add();
                 break;
             case 0x07:
-                sub();
+                Sub();
                 break;
             case 0x08:
-                mul();
+                Mul();
                 break;
             case 0x09:
-                cmp();
+                Cmp();
                 break;
             case 0x0A:
-                je();
+                Je();
                 break;
             case 0x0B:
-                jne();
+                Jne();
                 break;
             case 0x0C:
-                jmp();
+                Jmp();
                 break;
             case 0x0D:
-                callBack();
+                CallBack();
                 break;
             case 0x0E:
-                moveInt();
+                MoveInt();
                 break;
             case 0x0F:
-                moveReg();
+                MoveReg();
                 break;
             case 0x10:
-                pop();
+                Pop();
                 break;
             case 0x11:
-                popReg();
+                PopReg();
                 break;
             default:
-                std::cerr << "Invalid Instruction: " << instruction << std::endl;
+                std::cerr << "Invalid Instruction: " << Instructions << std::endl;
                 return;
             }
         }
     }
 
 private:
-    void pushInt() {
-        int value = readInt();
-        intStack.push(value);
+    void PushInt() {
+        int Value = ReadInt();
+        IntStack.push(Value);
     }
 
-    void pushStr() {
-        std::string value = readString();
-        stringStack.push(value);
+    void PushStr() {
+        std::string Value = ReadString();
+        StringStack.push(Value);
     }
 
-    void pushReg() {
-        uint8_t r1 = memory[programCounter];
-        programCounter++;
-        intStack.push(registers[r1]);
+    void PushReg() {
+        uint8_t R1 = Memory[ProgramCounter];
+        ProgramCounter++;
+        IntStack.push(Registers[R1]);
     }
 
-    void pop()
+    void Pop()
     {
-        if (!intStack.empty()) {
-            intStack.pop();
+        if (!IntStack.empty()) {
+            IntStack.pop();
         }
-        else if (!stringStack.empty()) {
-            stringStack.pop();
-        }
-    }
-
-    void popReg() {
-        if (!intStack.empty()) {
-            int number = intStack.top();
-            intStack.pop();
-            uint8_t r1 = memory[programCounter];
-            programCounter++;
-            registers[r1] = number;
+        else if (!StringStack.empty()) {
+            StringStack.pop();
         }
     }
 
-    void print() {
-        if (!intStack.empty()) {
-            std::cout << intStack.top() << std::endl;
-            intStack.pop();
-        }
-        else if (!stringStack.empty()) {
-            std::cout << stringStack.top() << std::endl;
-            stringStack.pop();
+    void PopReg() {
+        if (!IntStack.empty()) {
+            int Number = IntStack.top();
+            IntStack.pop();
+            uint8_t R1 = Memory[ProgramCounter];
+            ProgramCounter++;
+            Registers[R1] = Number;
         }
     }
 
-    void moveInt()
+    void Print() {
+        if (!IntStack.empty()) {
+            std::cout << IntStack.top() << std::endl;
+            IntStack.pop();
+        }
+        else if (!StringStack.empty()) {
+            std::cout << StringStack.top() << std::endl;
+            StringStack.pop();
+        }
+    }
+
+    void MoveInt()
     {
-        uint8_t r1 = memory[programCounter];
-        programCounter++;
-        auto number = readInt();
-        registers[r1] = number;
+        uint8_t R1 = Memory[ProgramCounter];
+        ProgramCounter++;
+        auto Number = ReadInt();
+        Registers[R1] = Number;
     }
 
-    void moveReg()
+    void MoveReg()
     {
-        auto result = readRegs();
-        int r1 = std::get<0>(result);
-        int r2 = std::get<1>(result);
-        registers[r1] = registers[r2];
+        auto Result = ReadRegs();
+        int R1 = std::get<0>(Result);
+        int R2 = std::get<1>(Result);
+        Registers[R1] = Registers[R2];
     }
 
-    void callBack()
+    void CallBack()
     {
-        if (!stringStack.empty()) {
-            std::string name = stringStack.top();
+        if (!StringStack.empty()) {
+            std::string Name = StringStack.top();
 
-            int i = data[name]();
-            intStack.push(i);
+            int It = Data[Name]();
+            IntStack.push(It);
         }
     }
 
-    void input() {
-        if (!intStack.empty()) {
-            int input;
-            std::cin >> input;
-            intStack.push(input);
+    void Input() {
+        if (!IntStack.empty()) {
+            int Input;
+            std::cin >> Input;
+            IntStack.push(Input);
         }
-        else if (!stringStack.empty()) {
-            std::string input;
-            std::cin >> input;
-            stringStack.push(input);
+        else if (!StringStack.empty()) {
+            std::string Input;
+            std::cin >> Input;
+            StringStack.push(Input);
         }
     }
 
-    void add() {
-        auto result = readRegs();
-        int r1 = std::get<0>(result);
-        int r2 = std::get<1>(result);
-        registers[r1] += registers[r2];
+    void Add() {
+        auto Result = ReadRegs();
+        int R1 = std::get<0>(Result);
+        int R2 = std::get<1>(Result);
+        Registers[R1] += Registers[R2];
     }
 
-    void sub() {
-        auto result = readRegs();
-        int r1 = std::get<0>(result);
-        int r2 = std::get<1>(result);
-        registers[r1] -= registers[r2];
+    void Sub() {
+        auto Result = ReadRegs();
+        int R1 = std::get<0>(Result);
+        int R2 = std::get<1>(Result);
+        Registers[R1] -= Registers[R2];
     }
 
-    void mul() {
-        auto result = readRegs();
-        int r1 = std::get<0>(result);
-        int r2 = std::get<1>(result);
-        registers[r1] *= registers[r2];
+    void Mul() {
+        auto Result = ReadRegs();
+        int R1 = std::get<0>(Result);
+        int R2 = std::get<1>(Result);
+        Registers[R1] *= Registers[R2];
     }
 
-    void cmp() {
-        auto result = readRegs();
-        int r1 = std::get<0>(result);
-        int r2 = std::get<1>(result);
-        intStack.push(r1 - r2);
+    void Cmp() {
+        auto Result = ReadRegs();
+        int R1 = std::get<0>(Result);
+        int R2 = std::get<1>(Result);
+        IntStack.push(R1 - R2);
     }
 
-    void je() {
-        int jumpAddress = readInt();
-        if (intStack.top() == 0) {
-            programCounter = jumpAddress;
+    void Je() {
+        int JumpAddress = ReadInt();
+        if (IntStack.top() == 0) {
+            ProgramCounter = JumpAddress;
         }
-        intStack.pop();
+        IntStack.pop();
     }
 
-    void jne() {
-        int jumpAddress = readInt();
-        if (intStack.top() != 0) {
-            programCounter = jumpAddress;
+    void Jne() {
+        int JumpAddress = ReadInt();
+        if (IntStack.top() != 0) {
+            ProgramCounter = JumpAddress;
         }
-        intStack.pop();
+        IntStack.pop();
     }
 
-    void jmp() {
-        int jumpAddress = readInt();
-        programCounter = jumpAddress;
+    void Jmp() {
+        int JumpAddress = ReadInt();
+        ProgramCounter = JumpAddress;
     }
 
-    int readInt() {
-        int value = memory[programCounter];
-        programCounter += 4;
-        return value;
+    int ReadInt() {
+        int Value = Memory[ProgramCounter];
+        ProgramCounter += 4;
+        return Value;
     }
 
-    std::tuple<int, int> readRegs() {
-        uint8_t r1 = memory[programCounter];
-        programCounter++;
-        uint8_t r2 = memory[programCounter];
-        programCounter++;
+    std::tuple<int, int> ReadRegs() {
+        uint8_t R1 = Memory[ProgramCounter];
+        ProgramCounter++;
+        uint8_t R2 = Memory[ProgramCounter];
+        ProgramCounter++;
 
-        return std::make_tuple(r1, r2);
+        return std::make_tuple(R1, R2);
     }
 
-    std::string readString() {
-        int size = memory[programCounter];
-        programCounter++;
-        std::string value(memory.begin() + programCounter, memory.begin() + programCounter + size);
-        programCounter += size;
-        return value;
+    std::string ReadString() {
+        int size = Memory[ProgramCounter];
+        ProgramCounter++;
+        std::string Value(Memory.begin() + ProgramCounter, Memory.begin() + ProgramCounter + size);
+        ProgramCounter += size;
+        return Value;
     }
 };
