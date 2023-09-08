@@ -106,11 +106,12 @@ private:
 
     void Pop()
     {
-        if (IntStack.empty() || StringStack.empty())
-            return;
-
-        StringStack.pop();
-        IntStack.pop();
+        if (!IntStack.empty()) {
+            IntStack.pop();
+        }
+        else if (!StringStack.empty()) {
+            StringStack.pop();
+        }
     }
 
     void PopReg() {
